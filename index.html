@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>LinguaCoach</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=DM+Mono:wght@400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; }
+body { font-family: 'DM Sans', system-ui, sans-serif; background: #f5f0e8; color: #1a1a2e; height: 100%; overflow: hidden; }
+
+/* ── LAYOUT ── */
+#app { display: flex; flex-direction: column; height: 100%; height: 100dvh; }
+header { background: #1a1a2e; color: #f5f0e8; padding: 10px 16px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 12px rgba(26,26,46,0.2); z-index: 10; }
+nav { display: flex; background: #ede8db; border-bottom: 1px solid #d0c8b8; flex-shrink: 0; }
+.main { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 0; }
+.section { padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 60px)); }
+
+/* ── TYPOGRAPHY ── */
+.serif { font-family: 'Playfair Display', Georgia, serif; }
+.mono  { font-family: 'DM Mono', monospace; }
+
+/* ── HEADER ── */
+.logo { font-family: 'Playfair Display', Georgia, serif; font-size: 20px; letter-spacing: -0.5px; }
+.logo span { color: #f0c078; }
+.header-right { display: flex; align-items: center; gap: 8px; }
+.lang-select { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); border-radius: 20px; padding: 4px 10px; color: #f5f0e8; font-size: 12px; cursor: pointer; font-family: inherit; outline: none; appearance: none; }
+
+/* ── NAV TABS ── */
+.tab { flex: 1; padding: 11px 5px; text-align: center; font-size: 11px; font-weight: 600; color: #7a7268; background: none; border: none; border-bottom: 2px solid transparent; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; font-family: inherit; transition: color 0.15s; }
+.tab.active { color: #d4883a; border-bottom-color: #d4883a; }
+
+/* ── CARDS & SHARED ── */
+.card { background: white; border-radius: 12px; padding: 16px; border: 1px solid #d0c8b8; box-shadow: 0 2px 8px rgba(26,26,46,0.07); }
+.section { padding: 16px; }
+.section-title { font-family: 'Playfair Display', Georgia, serif; font-size: 19px; margin-bottom: 4px; }
+.section-sub { font-size: 13px; color: #7a7268; margin-bottom: 14px; }
+.label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #7a7268; font-weight: 600; margin-bottom: 5px; }
+.chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+
+/* ── BUTTONS ── */
+.btn { padding: 12px 16px; border-radius: 10px; border: none; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; transition: opacity 0.15s, transform 0.1s; }
+.btn:active { transform: scale(0.97); opacity: 0.85; }
+.btn-primary { background: #1a1a2e; color: white; }
+.btn-amber   { background: #d4883a; color: white; }
+.btn-red     { background: #c0392b; color: white; }
+.btn-outline { background: #ede8db; color: #1a1a2e; border: 1px solid #d0c8b8; }
+.btn-block   { width: 100%; display: block; }
+.btn:disabled { opacity: 0.35; pointer-events: none; }
+
+/* ── API KEY SCREEN ── */
+#apiScreen { position: fixed; inset: 0; background: #1a1a2e; z-index: 999; display: flex; flex-direction: column; justify-content: center; padding: 32px 24px; }
+.api-logo { font-family: 'Playfair Display', Georgia, serif; font-size: 34px; color: #f5f0e8; text-align: center; margin-bottom: 8px; }
+.api-logo span { color: #f0c078; }
+.api-sub { font-size: 14px; color: rgba(245,240,232,0.55); text-align: center; margin-bottom: 36px; line-height: 1.6; }
+.api-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: rgba(245,240,232,0.5); margin-bottom: 8px; font-weight: 600; }
+.api-input { width: 100%; padding: 14px 16px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.18); color: #f5f0e8; font-size: 15px; font-family: 'DM Mono', monospace; outline: none; margin-bottom: 12px; }
+.api-input:focus { border-color: #d4883a; }
+.api-input::placeholder { color: rgba(245,240,232,0.25); }
+.api-note { font-size: 12px; color: rgba(245,240,232,0.4); text-align: center; margin-top: 16px; line-height: 1.6; }
+.api-note a { color: #f0c078; }
+
+/* ── CONVERSATION ── */
+#chatScroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.msg { max-width: 85%; border-radius: 14px; padding: 11px 14px; font-size: 15px; line-height: 1.55; }
+.msg-user { align-self: flex-end; background: #1a1a2e; color: #f5f0e8; border-bottom-right-radius: 4px; }
+.msg-ai   { align-self: flex-start; background: white; color: #1a1a2e; border: 1px solid #d0c8b8; border-bottom-left-radius: 4px; }
+.msg-system { align-self: center; background: #ede8db; color: #7a7268; font-size: 12px; padding: 6px 14px; border-radius: 20px; text-align: center; max-width: 90%; }
+.msg-typing { align-self: flex-start; background: white; border: 1px solid #d0c8b8; border-radius: 14px; border-bottom-left-radius: 4px; padding: 14px 18px; display: flex; gap: 5px; align-items: center; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: #7a7268; animation: bounce 1.2s infinite; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+/* ── INPUT BAR ── */
+#inputBar { flex-shrink: 0; background: white; border-top: 1px solid #d0c8b8; padding: 8px 12px; padding-bottom: max(8px, env(safe-area-inset-bottom, 8px)); display: flex; align-items: center; gap: 8px; }
+#inputBar.disabled { opacity: 0.5; pointer-events: none; }
+.mic-btn { width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; outline: none; }
+.mic-btn.idle      { background: #1a1a2e; }
+.mic-btn.requesting{ background: #d4883a; }
+.mic-btn.listening { background: #c0392b; animation: micpulse 1.4s infinite; }
+.mic-btn.done      { background: #27734a; }
+.text-input { flex: 1; border: 1.5px solid #d0c8b8; border-radius: 10px; padding: 8px 12px; font-size: 15px; font-family: inherit; background: #f5f0e8; color: #1a1a2e; outline: none; resize: none; max-height: 80px; min-height: 40px; }
+.text-input:focus { border-color: #d4883a; }
+.send-btn { width: 40px; height: 40px; border-radius: 10px; background: #d4883a; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+.mic-hint { font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #7a7268; text-align: center; margin-top: 2px; line-height: 1; user-select: none; }
+
+/* ── END BAR ── */
+#endBar { flex-shrink: 0; background: white; border-top: 1px solid #d0c8b8; padding: 8px 12px; padding-bottom: max(8px, env(safe-area-inset-bottom, 8px)); }
+
+/* ── LANDSCAPE TWEAKS ── */
+@media (max-height: 500px) {
+  header { padding: 6px 14px; }
+  nav .tab { padding: 7px 5px; font-size: 10px; }
+  .mic-btn { width: 40px; height: 40px; }
+  .send-btn { width: 36px; height: 36px; }
+  .text-input { min-height: 36px; font-size: 14px; }
+  #inputBar { padding: 6px 12px; padding-bottom: max(6px, env(safe-area-inset-bottom, 6px)); gap: 6px; }
+  #endBar { padding: 6px 12px; padding-bottom: max(6px, env(safe-area-inset-bottom, 6px)); }
+  #endBar .btn { padding: 8px 14px; font-size: 13px; }
+}
+
+/* ── TOPIC PICKER ── */
+.topic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 14px; }
+.topic-btn { padding: 14px 12px; border-radius: 12px; border: 1.5px solid #d0c8b8; background: white; font-size: 14px; cursor: pointer; text-align: left; font-family: inherit; transition: all 0.15s; line-height: 1.4; }
+.topic-btn:active { transform: scale(0.97); }
+.topic-btn.selected { border-color: #d4883a; background: #fdf4e3; }
+.topic-btn .topic-icon { font-size: 22px; display: block; margin-bottom: 6px; }
+.topic-btn .topic-name { font-weight: 600; font-size: 13px; display: block; }
+.topic-btn .topic-desc { font-size: 11px; color: #7a7268; display: block; margin-top:2px; }
+
+/* ── ANALYSIS ── */
+.analysis-section { margin-bottom: 20px; }
+.analysis-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: #7a7268; margin-bottom: 10px; }
+.error-item { background: white; border-radius: 10px; border: 1px solid #d0c8b8; padding: 13px 14px; margin-bottom: 8px; }
+.error-cat { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.error-cat.error   { color: #c0392b; }
+.error-cat.warning { color: #d4883a; }
+.error-cat.tip     { color: #2c5f8a; }
+.error-msg { font-size: 14px; line-height: 1.5; margin-bottom: 6px; }
+.error-quote { font-family: 'DM Mono', monospace; font-size: 12px; padding: 5px 9px; background: #fef9f0; border-left: 3px solid #c0392b; border-radius: 0 4px 4px 0; margin-bottom: 5px; color: #7a7268; }
+.error-fix   { font-family: 'DM Mono', monospace; font-size: 12px; padding: 5px 9px; background: #f0faf4; border-left: 3px solid #27734a; border-radius: 0 4px 4px 0; color: #27734a; }
+
+/* ── WEAKNESS BARS ── */
+.weak-item { background: white; border-radius: 10px; padding: 12px 13px; border: 1px solid #d0c8b8; margin-bottom: 7px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.weak-bar-wrap { width: 70px; height: 5px; background: #ede8db; border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+.weak-bar { height: 100%; border-radius: 3px; transition: width 0.5s; }
+
+/* ── EXERCISES ── */
+.ex-card { background: white; border-radius: 12px; padding: 15px; border: 1px solid #d0c8b8; margin-bottom: 10px; }
+.ex-tag { display: inline-block; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; padding: 2px 8px; border-radius: 20px; background: #fdf4e3; color: #d4883a; margin-bottom: 10px; }
+.ex-q { font-family: 'Playfair Display', Georgia, serif; font-size: 16px; line-height: 1.5; margin-bottom: 12px; }
+.ex-opt { display: block; width: 100%; padding: 10px 13px; border-radius: 8px; border: 1.5px solid #d0c8b8; background: #ede8db; font-size: 14px; cursor: pointer; text-align: left; font-family: inherit; margin-bottom: 7px; transition: all 0.12s; }
+.ex-opt.correct { background: rgba(39,115,74,0.1); border-color: #27734a; color: #27734a; }
+.ex-opt.wrong   { background: rgba(192,57,43,0.1); border-color: #c0392b; color: #c0392b; }
+.ex-fill { width: 100%; padding: 10px 13px; border-radius: 8px; border: 1.5px solid #d0c8b8; font-size: 14px; font-family: inherit; background: #ede8db; color: #1a1a2e; outline: none; margin-bottom: 8px; }
+.ex-fill:focus { border-color: #d4883a; }
+.ex-fill.correct { border-color: #27734a; }
+.ex-fill.wrong   { border-color: #c0392b; }
+.ex-explain { font-size: 13px; color: #7a7268; margin-top: 9px; padding: 8px 12px; background: #fdf4e3; border-radius: 6px; line-height: 1.5; display: none; }
+.ex-explain.show { display: block; }
+
+/* ── STATS ── */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 14px; }
+.stat-card { background: white; border-radius: 12px; padding: 13px; border: 1px solid #d0c8b8; text-align: center; }
+.stat-num { font-family: 'Playfair Display', Georgia, serif; font-size: 28px; font-weight: 700; line-height: 1; margin-bottom: 3px; }
+.stat-lbl { font-size: 12px; color: #7a7268; }
+
+/* ── MISC ── */
+.empty-state { text-align: center; padding: 36px 16px; color: #7a7268; }
+.empty-icon  { font-size: 42px; margin-bottom: 10px; }
+.spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.fade-in { animation: fadeIn 0.2s ease forwards; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+.banner { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; line-height: 1.5; }
+.banner-warn { background: rgba(212,136,58,0.12); border: 1px solid #d4883a; color: #b36d20; }
+.banner-err  { background: rgba(192,57,43,0.1);  border: 1px solid #c0392b; color: #c0392b; }
+.banner-ok   { background: rgba(39,115,74,0.1);  border: 1px solid #27734a; color: #27734a; }
+</style>
+</head>
+<body>
+
+<!-- ── API KEY SCREEN ── -->
+<div id="apiScreen">
+  <div class="api-logo">Lingua<span>Coach</span></div>
+  <div class="api-sub">Voer je Anthropic API-sleutel in om te beginnen.<br>Je sleutel wordt alleen lokaal opgeslagen op dit apparaat.</div>
+  <div class="api-label">Anthropic API-sleutel</div>
+  <input class="api-input" id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+  <button class="btn btn-amber btn-block" onclick="saveApiKey()">Opslaan en beginnen →</button>
+  <div class="api-note">
+    Sleutel aanmaken via <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a><br>
+    Gebruik is pay-as-you-go — normaal gebruik kost een paar cent per maand.
+  </div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div id="app" style="display:none">
+
+  <header>
+    <div class="logo">Lingua<span>Coach</span> <span style="font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;color:rgba(245,240,232,0.35);letter-spacing:0.3px;vertical-align:middle;">v2.4</span></div>
+    <div class="header-right">
+      <select class="lang-select" id="langSelect" onchange="onLangChange()">
+        <option value="nl-NL">🇳🇱 Nederlands</option>
+        <option value="en-GB">🇬🇧 English</option>
+        <option value="es-ES">🇪🇸 Español</option>
+        <option value="fr-FR">🇫🇷 Français</option>
+        <option value="de-DE">🇩🇪 Deutsch</option>
+        <option value="it-IT">🇮🇹 Italiano</option>
+      </select>
+      <button onclick="showApiScreen()" style="background:none;border:none;color:rgba(245,240,232,0.5);font-size:18px;cursor:pointer;padding:2px 4px;" title="API-sleutel wijzigen">⚙</button>
+    </div>
+  </header>
+
+  <nav>
+    <button class="tab active" id="tab-chat"      onclick="switchTab('chat')">💬 Gesprek</button>
+    <button class="tab"        id="tab-exercises" onclick="switchTab('exercises')">✏️ Oefeningen</button>
+    <button class="tab"        id="tab-progress"  onclick="switchTab('progress')">📊 Voortgang</button>
+  </nav>
+
+  <!-- ══ CHAT TAB ══ -->
+  <div id="pane-chat" class="main" style="display:flex;flex-direction:column;height:100%;min-height:0;">
+
+    <!-- Topic picker (shown before conversation starts) -->
+    <div id="topicPicker" class="section" style="overflow-y:auto;flex:1;min-height:0;">
+      <div class="section-title">Nieuw gesprek</div>
+      <div class="section-sub" id="topicSubLabel">Kies een onderwerp om mee te beginnen</div>
+      <div class="topic-grid" id="topicGrid"></div>
+      <div style="margin-bottom:10px">
+        <div class="label">Of stel je eigen onderwerp in</div>
+        <input id="customTopic" type="text" placeholder="bijv. Mijn vakantieplannen…"
+          style="width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid #d0c8b8;font-size:14px;font-family:inherit;background:#ede8db;color:#1a1a2e;outline:none;margin-bottom:10px;">
+      </div>
+      <div id="topicBanner"></div>
+      <button class="btn btn-amber btn-block" id="startBtn" onclick="startConversation()">Gesprek beginnen →</button>
+    </div>
+
+    <!-- Active conversation -->
+    <div id="chatView" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;">
+      <div id="chatScroll" style="flex:1;overflow-y:auto;min-height:0;"></div>
+      <div id="endBar" style="display:none;">
+        <button class="btn btn-red btn-block" onclick="endConversation()">
+          Gesprek beëindigen &amp; analyseren
+        </button>
+      </div>
+      <div id="inputBar">
+        <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+          <button class="mic-btn idle" id="micBtn" onclick="toggleMic()">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+              <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-6.5 9.5A6.5 6.5 0 0 0 12 17a6.5 6.5 0 0 0 6.5-6.5H20a8 8 0 0 1-7 7.938V21h-2v-2.562A8 8 0 0 1 4 10.5h1.5z"/>
+            </svg>
+          </button>
+          <div class="mic-hint" id="micHint">Tik om op te nemen</div>
+        </div>
+        <textarea class="text-input" id="textInput" placeholder="Of typ hier…" rows="1"
+          oninput="autoResize(this)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendText();}"></textarea>
+        <button class="send-btn" onclick="sendText()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+            <path d="M2 21l21-9L2 3v7l15 2-15 2z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Analysis view (shown after ending conversation) -->
+    <div id="analysisView" class="section" style="display:none;overflow-y:auto;flex:1;"></div>
+
+  </div>
+
+  <!-- ══ EXERCISES TAB ══ -->
+  <div id="pane-exercises" class="main section" style="display:none;">
+    <div class="section-title">Oefeningen</div>
+    <div class="section-sub">Gegenereerd op basis van jouw zwakke punten</div>
+    <div id="exerciseContainer">
+      <div class="empty-state">
+        <div class="empty-icon">✏️</div>
+        <p style="font-size:14px;line-height:1.6;">Voltooi eerst een gesprek.<br>De AI genereert dan oefeningen<br>gericht op jouw fouten.</p>
+      </div>
+    </div>
+    <button class="btn btn-outline btn-block" id="genExBtn" style="display:none;margin-top:8px" onclick="generateExercises()">
+      Nieuwe oefeningen genereren
+    </button>
+  </div>
+
+  <!-- ══ PROGRESS TAB ══ -->
+  <div id="pane-progress" class="main section" style="display:none;">
+    <div class="section-title">Jouw voortgang</div>
+
+    <div class="stats-grid" style="margin-top:12px">
+      <div class="stat-card"><div class="stat-num" id="statSessions">0</div><div class="stat-lbl">Gesprekken</div></div>
+      <div class="stat-card"><div class="stat-num" id="statErrors">0</div><div class="stat-lbl">Fouten gevonden</div></div>
+      <div class="stat-card"><div class="stat-num" id="statFixed">0</div><div class="stat-lbl">Oefeningen gedaan</div></div>
+      <div class="stat-card"><div class="stat-num" id="statStreak">0</div><div class="stat-lbl">Dagenreeks 🔥</div></div>
+    </div>
+
+    <div class="label" style="margin-bottom:9px;margin-top:4px;">Zwakke punten (over alle sessies)</div>
+    <div id="weakList">
+      <div class="empty-state" style="padding:16px"><p style="font-size:13px">Nog geen data.</p></div>
+    </div>
+
+    <div class="label" style="margin-bottom:9px;margin-top:16px;">Recente gesprekken</div>
+    <div id="historyList">
+      <div style="font-size:13px;color:#7a7268;">Nog geen gesprekken.</div>
+    </div>
+
+    <button class="btn btn-outline btn-block" style="margin-top:16px" onclick="exportProgress()">
+      ⬇ Exporteer voortgang (.json)
+    </button>
+    <div style="font-size:11px;color:#7a7268;text-align:center;margin-top:6px;line-height:1.5;">Download en upload dit bestand in een gesprek met Claude voor verdere analyse.</div>
+
+    <button class="btn btn-outline btn-block" style="margin-top:16px;font-size:13px;color:#7a7268;" onclick="resetProgress()">
+      Voortgang resetten
+    </button>
+  </div>
+
+</div>
+
+<script>
+// ════════════════════════════════════════════
+// CONSTANTS & DATA
+// ════════════════════════════════════════════
+const API_URL    = "https://api.anthropic.com/v1/messages";
+const MODEL      = "claude-haiku-4-5-20251001";
+const STORAGE_KEY = "lc_state_v1";
+const API_KEY_KEY = "lc_apikey";
+
+const LANG_NAMES = {
+  "nl-NL":"Nederlands", "en-GB":"English", "es-ES":"Español",
+  "fr-FR":"Français",   "de-DE":"Deutsch",  "it-IT":"Italiano"
+};
+
+const TOPICS = {
+  "nl-NL": [
+    { icon:"⚡", name:"Snelle test",       desc:"5 gerichte vragen, snel geanalyseerd",  prompt:"", isTest:true },
+    { icon:"🏠", name:"Thuis & Familie",   desc:"Beschrijf je huis of familie",          prompt:"Vertel me iets over je huis of familie." },
+    { icon:"✈️", name:"Vakantie",           desc:"Praat over reizen en vakanties",        prompt:"Vertel me over een vakantie die je hebt gemaakt of wil maken." },
+    { icon:"🍽️", name:"Eten & Drinken",    desc:"Bespreek je favoriete eten",            prompt:"Wat is je favoriete eten en waarom?" },
+    { icon:"💼", name:"Werk & School",     desc:"Vertel over je dagelijks leven",        prompt:"Vertel me over je werk of studie." },
+    { icon:"🎬", name:"Vrije tijd",        desc:"Hobby's, films, muziek",               prompt:"Wat doe je graag in je vrije tijd?" },
+    { icon:"🌍", name:"Actualiteit",       desc:"Praat over het nieuws",                prompt:"Is er iets interessants in het nieuws dat je aandacht heeft getrokken?" },
+  ],
+  "en-GB": [
+    { icon:"⚡", name:"Quick test",        desc:"5 targeted questions, quick analysis",  prompt:"", isTest:true },
+    { icon:"🏠", name:"Home & Family",     desc:"Describe your home or family",          prompt:"Tell me about your home or family." },
+    { icon:"✈️", name:"Travel",             desc:"Talk about trips and holidays",         prompt:"Tell me about a trip you've taken or would like to take." },
+    { icon:"🍽️", name:"Food & Drink",      desc:"Discuss your favourite food",           prompt:"What is your favourite food and why?" },
+    { icon:"💼", name:"Work & Study",      desc:"Talk about your daily life",            prompt:"Tell me about your work or studies." },
+    { icon:"🎬", name:"Free Time",         desc:"Hobbies, films, music",                 prompt:"What do you enjoy doing in your free time?" },
+    { icon:"🌍", name:"Current Events",    desc:"Talk about the news",                   prompt:"Is there anything interesting in the news that has caught your attention?" },
+  ],
+};
+["es-ES","fr-FR","de-DE","it-IT"].forEach(l => TOPICS[l] = TOPICS["en-GB"]);
+
+// ════════════════════════════════════════════
+// CATEGORY NORMALISATION
+// Weakness categories come from free-text AI labels, which drift
+// ("Artikel", "Article Choice", "Article-Noun Gender Agreement" are
+// all the same underlying mistake). This maps any label onto a small
+// fixed taxonomy so tracking stays clean over time.
+// ════════════════════════════════════════════
+const CANONICAL_CATEGORIES = [
+  "verb_conjugation","verb_tense","separable_verbs","modal_verbs","reflexive_verbs",
+  "word_order","negation","articles_gender","adjective_agreement","plural_formation",
+  "prepositions","pronouns","vocabulary","sentence_structure","other"
+];
+
+// Ordered list: first matching keyword set wins. More specific checks
+// (e.g. "article"/gender) are placed before generic ones (e.g. "agreement").
+const CATEGORY_ALIASES = [
+  { canon:"separable_verbs",     keywords:["separable","scheidbaar"] },
+  { canon:"modal_verbs",         keywords:["modal","modaal"] },
+  { canon:"reflexive_verbs",     keywords:["reflexive","wederkerend"] },
+  { canon:"articles_gender",     keywords:["article","artikel","lidwoord","de/het","de-het","gender"] },
+  { canon:"adjective_agreement", keywords:["adjective","bijvoeglijk","agreement"] },
+  { canon:"plural_formation",    keywords:["plural","meervoud"] },
+  { canon:"negation",            keywords:["negation","ontkenning"] },
+  { canon:"prepositions",        keywords:["preposition","voorzetsel"] },
+  { canon:"pronouns",            keywords:["pronoun","voornaamwoord"] },
+  { canon:"verb_tense",          keywords:["tense","tijd","participle","perfectum","perfect","imperfect","deelwoord","conditional","future"] },
+  { canon:"verb_conjugation",    keywords:["conjugat","vervoeg","verbform","verb form"] },
+  { canon:"word_order",          keywords:["wordorder","word order","woordvolgorde","inversion","sentenceorder"] },
+  { canon:"sentence_structure",  keywords:["structure","zinsbouw","clause"] },
+  { canon:"vocabulary",          keywords:["vocab","woordkeuze","wordchoice","word choice"] },
+];
+
+function normalizeCategory(raw) {
+  if (!raw) return "other";
+  const slug = String(raw).toLowerCase().trim();
+  const compact = slug.replace(/[^a-z0-9]/g,""); // for matching multi-word keywords regardless of spacing
+  for (const rule of CATEGORY_ALIASES) {
+    for (const kw of rule.keywords) {
+      const kwCompact = kw.replace(/[^a-z0-9]/g,"");
+      if (compact.includes(kwCompact)) return rule.canon;
+    }
+  }
+  // No known alias matched — fall back to a slugified version of the
+  // original label so genuinely new categories aren't lost.
+  return slug.replace(/\s+/g,"_").replace(/[^\w]/g,"") || "other";
+}
+
+function mergeWeaknessCategories(weaknesses) {
+  const merged = {};
+  for (const [rawCat, d] of Object.entries(weaknesses||{})) {
+    const cat = normalizeCategory(rawCat);
+    if (!merged[cat]) merged[cat] = { count:0, correct:0, examples:[] };
+    merged[cat].count   += d.count||0;
+    merged[cat].correct += d.correct||0;
+    (d.examples||[]).forEach(ex => {
+      if (merged[cat].examples.length < 3 && !merged[cat].examples.includes(ex)) merged[cat].examples.push(ex);
+    });
+  }
+  return merged;
+}
+
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+function defaultState() {
+  return { sessions:0, totalErrors:0, exercisesDone:0, streak:0, lastDate:null, weaknesses:{}, history:[] };
+}
+let appState = defaultState();
+let selectedLang = "nl-NL";
+let apiKey = "";
+let conversation = [];       // {role, content} for API
+let conversationMsgs = [];   // {role, text} for display
+let selectedTopic = null;
+let conversationActive = false;
+let analysisData = null;
+let generatedExercises = [];
+
+function loadState() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) appState = { ...defaultState(), ...JSON.parse(s) };
+    // One-time (idempotent) cleanup: merge any fragmented category labels
+    // from older sessions onto the fixed taxonomy.
+    appState.weaknesses = mergeWeaknessCategories(appState.weaknesses);
+    apiKey = localStorage.getItem(API_KEY_KEY) || "";
+    selectedLang = appState.lang || "nl-NL";
+    saveState();
+  } catch(e) {}
+}
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({...appState, lang:selectedLang})); } catch(e) {}
+}
+
+// ════════════════════════════════════════════
+// EXPORT PROGRESS (download as .json — browsers can't auto-attach
+// files to emails, so download + manual upload/attach is the reliable path)
+// ════════════════════════════════════════════
+function exportProgress() {
+  try {
+    const payload = { ...appState, lang:selectedLang, exportedAt:new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const dateStr = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = `linguacoach-progress-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  } catch(e) {
+    alert("Export mislukt: " + e.message);
+  }
+}
+
+// ════════════════════════════════════════════
+// API KEY
+// ════════════════════════════════════════════
+function saveApiKey() {
+  const val = document.getElementById("apiKeyInput").value.trim();
+  if (!val.startsWith("sk-ant")) {
+    alert("Dat lijkt geen geldig Anthropic API-sleutel. Het moet beginnen met 'sk-ant'.");
+    return;
+  }
+  apiKey = val;
+  localStorage.setItem(API_KEY_KEY, apiKey);
+  document.getElementById("apiScreen").style.display = "none";
+  document.getElementById("app").style.display = "flex";
+  initApp();
+}
+
+function showApiScreen() {
+  document.getElementById("apiKeyInput").value = apiKey;
+  document.getElementById("apiScreen").style.display = "flex";
+  document.getElementById("app").style.display = "none";
+}
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+function initApp() {
+  document.getElementById("langSelect").value = selectedLang;
+  renderTopics();
+  renderProgress();
+}
+
+loadState();
+if (apiKey) {
+  document.getElementById("apiScreen").style.display = "none";
+  document.getElementById("app").style.display = "flex";
+  initApp();
+} else {
+  document.getElementById("app").style.display = "none";
+}
+
+// ════════════════════════════════════════════
+// TAB NAVIGATION
+// ════════════════════════════════════════════
+function switchTab(name) {
+  ["chat","exercises","progress"].forEach(t => {
+    document.getElementById("tab-" + t).classList.toggle("active", t === name);
+    document.getElementById("pane-" + t).style.display = t === name ? (t==="chat"?"flex":"block") : "none";
+  });
+  if (name === "progress") renderProgress();
+}
+
+// ════════════════════════════════════════════
+// LANGUAGE
+// ════════════════════════════════════════════
+function onLangChange() {
+  selectedLang = document.getElementById("langSelect").value;
+  saveState();
+  renderTopics();
+  // Reset conversation if not active
+  if (!conversationActive) resetToTopicPicker();
+}
+
+// ════════════════════════════════════════════
+// TOPIC PICKER
+// ════════════════════════════════════════════
+function renderTopics() {
+  const topics = TOPICS[selectedLang] || TOPICS["en-GB"];
+  const grid = document.getElementById("topicGrid");
+  document.getElementById("topicSubLabel").textContent =
+    `Kies een onderwerp om mee te beginnen (${LANG_NAMES[selectedLang]})`;
+
+  // Separate test topic from regular topics
+  const testTopic = topics.find(t => t.isTest);
+  const regularTopics = topics.filter(t => !t.isTest);
+  const testIdx = topics.indexOf(testTopic);
+
+  let fullHtml = "";
+  if (testTopic) {
+    fullHtml += `<button class="topic-btn" id="topic-${testIdx}" onclick="selectTopic(${testIdx})"
+      style="grid-column:1/-1;border-color:#d4883a;background:#fdf4e3;display:flex;align-items:center;gap:12px;padding:13px 15px;">
+      <span style="font-size:24px">${testTopic.icon}</span>
+      <span>
+        <span class="topic-name" style="color:#d4883a">${testTopic.name}</span>
+        <span class="topic-desc" style="display:block">${testTopic.desc}</span>
+      </span>
+    </button>`;
+  }
+  fullHtml += regularTopics.map((t, i) => {
+    const realIdx = topics.indexOf(t);
+    return `<button class="topic-btn" id="topic-${realIdx}" onclick="selectTopic(${realIdx})">
+      <span class="topic-icon">${t.icon}</span>
+      <span class="topic-name">${t.name}</span>
+      <span class="topic-desc">${t.desc}</span>
+    </button>`;
+  }).join("");
+
+  grid.innerHTML = fullHtml;
+  selectedTopic = null;
+  document.getElementById("topicBanner").innerHTML = "";
+}
+
+function selectTopic(i) {
+  selectedTopic = i;
+  document.querySelectorAll(".topic-btn").forEach((b,j) => b.classList.toggle("selected", j===i));
+  document.getElementById("customTopic").value = "";
+}
+
+function resetToTopicPicker() {
+  conversation = [];
+  conversationMsgs = [];
+  conversationActive = false;
+  analysisData = null;
+  document.getElementById("topicPicker").style.display = "block";
+  document.getElementById("chatView").style.display = "none";
+  document.getElementById("analysisView").style.display = "none";
+  document.getElementById("topicBanner").innerHTML = "";
+  document.getElementById("chatScroll").innerHTML = "";
+  renderTopics();
+}
+
+// ════════════════════════════════════════════
+// START CONVERSATION
+// ════════════════════════════════════════════
+let isTestMode = false;
+
+async function startConversation() {
+  const topics = TOPICS[selectedLang] || TOPICS["en-GB"];
+  const custom = document.getElementById("customTopic").value.trim();
+  let topicPrompt = "";
+  isTestMode = false;
+
+  if (custom) {
+    topicPrompt = custom;
+  } else if (selectedTopic !== null) {
+    const topic = topics[selectedTopic];
+    if (topic.isTest) {
+      isTestMode = true;
+      topicPrompt = "__test__";
+    } else {
+      topicPrompt = topic.prompt;
+    }
+  } else {
+    document.getElementById("topicBanner").innerHTML = `<div class="banner banner-warn">Kies een onderwerp of voer een eigen onderwerp in.</div>`;
+    return;
+  }
+
+  const systemPrompt = isTestMode ? buildTestPrompt() : buildSystemPrompt(topicPrompt);
+  const openingMsg   = isTestMode ? "Start de snelle test." : topicPrompt;
+  conversation = [{ role:"user", content: openingMsg }];
+
+  document.getElementById("topicPicker").style.display = "none";
+  document.getElementById("chatView").style.display = "flex";
+  document.getElementById("endBar").style.display = "block";
+  conversationActive = true;
+
+  if (!isTestMode) appendMsg("user", topicPrompt);
+  showTyping();
+
+  const reply = await callClaude(systemPrompt, conversation);
+  hideTyping();
+
+  if (reply.error) {
+    appendMsg("system", "⚠️ API-fout: " + reply.error);
+    return;
+  }
+
+  conversation.push({ role:"assistant", content: reply.text });
+  appendMsg("ai", reply.text);
+  scrollChat();
+}
+
+function buildSystemPrompt(topicPrompt) {
+  const lang = LANG_NAMES[selectedLang];
+  return `You are a friendly and encouraging ${lang} conversation partner helping a language learner practise ${lang}.
+
+Rules:
+1. Have a natural, engaging conversation in ${lang} about the topic introduced by the user.
+2. Keep your responses conversational and concise (2-4 sentences).
+3. Ask follow-up questions to keep the conversation going.
+4. NEVER correct errors during the conversation — not even small ones, not even as a hint. Errors will be analysed at the end.
+5. NEVER use markdown formatting: no asterisks (*), no bold, no bullet points, no headers. Plain text only.
+6. If the user writes in another language, respond in ${lang} and gently encourage them to continue in ${lang}.
+7. Adapt your vocabulary to the user's apparent level.
+
+The user opened with: "${topicPrompt}"`;
+}
+
+function buildTestPrompt() {
+  const lang = LANG_NAMES[selectedLang];
+  return `You are a ${lang} language tester giving a learner a quick 5-question spoken test.
+
+Rules:
+1. Ask exactly 5 questions, one at a time. Wait for the learner to answer before asking the next.
+2. Questions should test a mix of grammar areas: verb conjugation, word order, articles, prepositions, sentence structure.
+3. Keep each question short and clear.
+4. After the learner answers, acknowledge briefly (1 sentence max) then immediately ask the next question.
+5. After the 5th answer, write exactly: "Test voltooid. Tik op 'Gesprek beëindigen' voor je analyse." (or in English if lang is English: "Test complete. Tap 'End conversation' for your analysis.")
+6. Do NOT correct errors during the test — let the learner speak naturally.
+7. Ask your first question now.`;
+}
+
+// ════════════════════════════════════════════
+// SEND MESSAGE
+// ════════════════════════════════════════════
+async function sendMessage(text) {
+  if (!text.trim() || !conversationActive) return;
+  appendMsg("user", text);
+  conversation.push({ role:"user", content: text });
+  conversationMsgs.push({ role:"user", text });
+  scrollChat();
+
+  const systemPrompt = isTestMode ? buildTestPrompt() : buildSystemPrompt("");
+  showTyping();
+  disableInput(true);
+
+  const reply = await callClaude(systemPrompt, conversation);
+  hideTyping();
+  disableInput(false);
+
+  if (reply.error) {
+    appendMsg("system", "⚠️ " + reply.error);
+    return;
+  }
+  conversation.push({ role:"assistant", content: reply.text });
+  conversationMsgs.push({ role:"ai", text: reply.text });
+  appendMsg("ai", reply.text);
+  scrollChat();
+}
+
+function sendText() {
+  const inp = document.getElementById("textInput");
+  const val = inp.value.trim();
+  if (!val) return;
+  inp.value = "";
+  inp.style.height = "44px";
+  setMicState("idle");
+  sendMessage(val);
+}
+
+// ════════════════════════════════════════════
+// END & ANALYSE CONVERSATION
+// ════════════════════════════════════════════
+async function endConversation() {
+  if (!conversationActive) return;
+  conversationActive = false;
+  disableInput(true);
+  document.getElementById("endBar").style.display = "none";
+  document.getElementById("inputBar").style.display = "none";
+
+  const userTurns = conversation.filter(m => m.role==="user").map(m => m.content).join("\n---\n");
+
+  if (!userTurns.trim()) {
+    document.getElementById("chatView").style.display = "none";
+    document.getElementById("analysisView").style.display = "block";
+    document.getElementById("analysisView").innerHTML = `<div class="empty-state"><div class="empty-icon">🤷</div><p>Geen berichten om te analyseren.</p></div><button class="btn btn-outline btn-block" style="margin-top:16px" onclick="resetToTopicPicker()">Nieuw gesprek</button>`;
+    return;
+  }
+
+  appendMsg("system", "Gesprek beëindigd — analyse wordt uitgevoerd…");
+
+  const lang = LANG_NAMES[selectedLang];
+  const context = `IMPORTANT: This transcript was produced by speech-to-text software. Do NOT flag capitalisation, punctuation, or spelling. Only flag genuine spoken grammar errors: wrong verb forms, word order, articles, prepositions, vocabulary, sentence structure.`;
+
+  // ── Call 1: plain text summary ──
+  const summaryResult = await callClaude(
+    `You are an encouraging ${lang} language teacher giving spoken feedback. Write in plain prose only. No asterisks, no bold, no bullet points, no markdown of any kind, no JSON.`,
+    [{ role:"user", content: `${context}\n\nWrite a 2-3 sentence plain text summary of this ${lang} learner's performance. Be specific and encouraging. No formatting whatsoever.\n\nTRANSCRIPT:\n${userTurns}` }]
+  );
+
+  // ── Call 2: errors only as JSON ──
+  const errorsResult = await callClaude(
+    `You are an expert ${lang} grammar analyser. Output ONLY a raw JSON array starting with [ and ending with ]. No markdown, no asterisks, no code fences, no text outside the array.`,
+    [{ role:"user", content: `${context}\n\nAnalyse this ${lang} learner transcript. Return ONLY a JSON array, no other text:\n[\n  {\n    "category": "one of: ${CANONICAL_CATEGORIES.join(", ")}",\n    "severity": "error",\n    "original": "exact phrase used",\n    "correction": "correct version",\n    "explanation": "simple plain text explanation, no asterisks or markdown"\n  }\n]\nIMPORTANT: "category" must be exactly one of the listed values above (use "other" only if truly none fit) — do not invent new category names or wording variants of these.\nIf there are no errors return exactly: []\n\nTRANSCRIPT:\n${userTurns}` }]
+  );
+
+  // ── Call 3: strengths as plain text list ──
+  const strengthsResult = await callClaude(
+    `You are an encouraging ${lang} language teacher. Output only plain text, one strength per line. No asterisks, no bold, no bullet symbols, no dashes, no markdown, no JSON.`,
+    [{ role:"user", content: `List 2-3 specific things this ${lang} learner did well. One per line, plain text only, no symbols at the start of lines.\n\nTRANSCRIPT:\n${userTurns}` }]
+  );
+
+  // Parse errors array
+  let errors = [];
+  let parseWarning = false;
+  if (!errorsResult.error) {
+    try {
+      const clean = errorsResult.text
+        .replace(/```json/gi,"").replace(/```/g,"")
+        .trim();
+      const arrMatch = clean.match(/\[[\s\S]*\]/);
+      if (arrMatch) errors = JSON.parse(arrMatch[0]);
+      if (!Array.isArray(errors)) { errors = []; parseWarning = true; }
+    } catch(e) { errors = []; parseWarning = true; }
+  } else {
+    parseWarning = true;
+  }
+
+  const summary   = summaryResult.error   ? "" : summaryResult.text.trim();
+  const strengths = strengthsResult.error ? [] : strengthsResult.text.trim().split("\n").filter(s => s.trim());
+
+  const parsed = { summary, errors, strengths, overallFeedback:"", parseWarning };
+  analysisData = parsed;
+  renderAnalysis(parsed);
+  updateStateAfterAnalysis(parsed);
+
+  setTimeout(() => {
+    document.getElementById("chatView").style.display = "none";
+    document.getElementById("analysisView").style.display = "block";
+    document.getElementById("analysisView").scrollTop = 0;
+  }, 400);
+}
+
+function renderAnalysis(data) {
+  const el = document.getElementById("analysisView");
+  let html = `<div class="fade-in" style="padding-bottom:24px">`;
+  html += `<div class="section-title" style="margin-bottom:12px">Gespreksanalyse</div>`;
+
+  // Summary — plain text, no JSON possible
+  if (data.summary) {
+    html += `<div class="card" style="margin-bottom:14px;font-size:14px;line-height:1.7;">${escHtml(data.summary)}</div>`;
+  }
+
+  // Errors
+  if (data.parseWarning && (!data.errors || data.errors.length === 0)) {
+    html += `<div class="banner banner-warn" style="margin-bottom:14px">⚠️ Kon fouten niet automatisch verwerken — ze zijn niet opgeslagen in je zwakke punten. Probeer opnieuw na het volgende gesprek.</div>`;
+  } else if (data.errors && data.errors.length > 0) {
+    html += `<div class="analysis-section">`;
+    html += `<div class="analysis-section-title">Gevonden fouten (${data.errors.length})</div>`;
+    data.errors.forEach(err => {
+      html += `<div class="error-item">
+        <div class="error-cat ${err.severity==="warning"?"warning":"error"}">${escHtml((err.category||"").toUpperCase())} · ${err.severity==="warning"?"LET OP":"FOUT"}</div>
+        <div class="error-msg">${escHtml(err.explanation||"")}</div>
+        ${err.original   ? `<div class="error-quote">✗ "${escHtml(err.original)}"</div>`   : ""}
+        ${err.correction ? `<div class="error-fix">✓ "${escHtml(err.correction)}"</div>` : ""}
+      </div>`;
+    });
+    html += `</div>`;
+  } else if (data.errors) {
+    // Only show this if errors array actually came back empty (not a parse failure)
+    html += `<div class="banner banner-ok" style="margin-bottom:14px">✓ Geen grammaticafouten gevonden — goed gedaan!</div>`;
+  }
+
+  // Strengths — plain text lines
+  if (data.strengths && data.strengths.length > 0) {
+    html += `<div class="analysis-section">`;
+    html += `<div class="analysis-section-title">Sterke punten</div>`;
+    html += `<div class="card" style="font-size:14px;line-height:1.9;">`;
+    data.strengths.forEach(s => {
+      const clean = s.replace(/^[-•*]\s*/,"").trim();
+      if (clean) html += `✓ ${escHtml(clean)}<br>`;
+    });
+    html += `</div></div>`;
+  }
+
+  html += `<div style="display:flex;gap:9px;margin-top:14px;">`;
+  html += `<button class="btn btn-outline" style="flex:1" onclick="resetToTopicPicker()">Nieuw gesprek</button>`;
+  html += `<button class="btn btn-amber" style="flex:1" onclick="goToExercises()">Oefeningen →</button>`;
+  html += `</div>`;
+
+  // Show what was saved to weaknesses so user can verify
+  if (data.errors && data.errors.length > 0) {
+    const cats = [...new Set(data.errors.map(e => normalizeCategory(e.category)))];
+    html += `<div style="margin-top:14px;padding:10px 13px;background:#ede8db;border-radius:8px;font-size:12px;color:#7a7268;line-height:1.6;">`;
+    html += `<strong style="color:#1a1a2e;">Opgeslagen in zwakke punten:</strong><br>`;
+    html += cats.map(cat => {
+      const d = appState.weaknesses[cat];
+      return `${cat.replace(/_/g," ")} — ${d ? d.count : "?"} fout${d&&d.count!==1?"en":""}`;
+    }).join("<br>");
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+
+  el.innerHTML = html;
+}
+
+function goToExercises() {
+  switchTab("exercises");
+  generateExercises();
+}
+
+// ════════════════════════════════════════════
+// UPDATE STATE AFTER ANALYSIS
+// ════════════════════════════════════════════
+function updateStateAfterAnalysis(data) {
+  const errors = data.errors || [];
+  const today = new Date().toDateString();
+  const yesterday = new Date(Date.now()-86400000).toDateString();
+
+  appState.sessions++;
+  appState.totalErrors += errors.length;
+  appState.streak = appState.lastDate===today ? appState.streak
+                  : appState.lastDate===yesterday ? appState.streak+1 : 1;
+  appState.lastDate = today;
+
+  errors.forEach(err => {
+    const cat = normalizeCategory(err.category);
+    if (!appState.weaknesses[cat]) appState.weaknesses[cat] = { count:0, correct:0, examples:[] };
+    appState.weaknesses[cat].count++;
+    if (err.original && appState.weaknesses[cat].examples.length < 3)
+      appState.weaknesses[cat].examples.push(err.original);
+  });
+
+  appState.history = [{
+    date: new Date().toLocaleDateString("nl-NL"),
+    lang: selectedLang,
+    errors: errors.length,
+    summary: (data.summary||"").slice(0,80)
+  }, ...(appState.history||[])].slice(0,20);
+
+  saveState();
+}
+
+// ════════════════════════════════════════════
+// GENERATE EXERCISES
+// ════════════════════════════════════════════
+async function generateExercises() {
+  const btn = document.getElementById("genExBtn");
+  const container = document.getElementById("exerciseContainer");
+
+  if (Object.keys(appState.weaknesses).length === 0 && !analysisData) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">✏️</div><p style="font-size:14px;line-height:1.6;">Voltooi eerst een gesprek zodat de AI weet waar je aan moet werken.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = `<div style="text-align:center;padding:32px 16px;color:#7a7268"><div class="spinner" style="border-top-color:#d4883a;border-color:rgba(212,136,58,0.2);width:28px;height:28px;margin:0 auto 12px"></div><div style="font-size:14px">Oefeningen genereren…</div></div>`;
+  if (btn) btn.style.display = "none";
+
+  const lang = LANG_NAMES[selectedLang];
+
+  // Score each weakness: net difficulty = errors minus correct answers
+  const allWeakEntries = Object.entries(appState.weaknesses)
+    .map(([cat, d]) => ({
+      cat,
+      count: d.count||0,
+      correct: d.correct||0,
+      net: (d.count||0) - (d.correct||0),
+      examples: d.examples||[]
+    }))
+    .sort((a,b) => b.net - a.net);
+
+  const struggling = allWeakEntries.filter(e => e.net > 0).slice(0,4);
+  const improving  = allWeakEntries.filter(e => e.net <= 0 && e.count > 0).slice(0,3);
+
+  const weakSummary = struggling.length
+    ? struggling.map(e => `- ${e.cat.replace(/_/g," ")} (${e.count} errors, ${e.correct} correct) ${e.examples[0]?`e.g.: "${e.examples[0]}"`:""}` ).join("\n")
+    : "General grammar";
+
+  const improvingSummary = improving.length
+    ? improving.map(e => `- ${e.cat.replace(/_/g," ")} (getting better: ${e.correct} correct out of ${e.count+e.correct} attempts)`).join("\n")
+    : "None yet";
+
+  const recentErrors = analysisData && analysisData.errors
+    ? analysisData.errors.slice(0,5).map(e => `- ${e.category}: "${e.original}" → "${e.correction}"`).join("\n")
+    : "";
+
+  const sessionCount = appState.sessions || 0;
+  const systemP = `You are a ${lang} language teacher creating targeted grammar exercises. Return ONLY a raw JSON object, no markdown, no code fences, no other text.`;
+  const userP = `Create 5 varied grammar exercises for a ${lang} learner.
+
+STILL STRUGGLING — focus most exercises here:
+${weakSummary}
+
+IMPROVING — include at most 1 exercise here to consolidate, not too many:
+${improvingSummary}
+
+RECENT ERRORS FROM LAST SESSION:
+${recentErrors || "None available"}
+
+STRICT RULES — follow exactly:
+1. Use "mcq" type when the answer is more than one word. Use "fill" type ONLY when the answer is exactly ONE single word.
+2. For fill exercises: answerText must be exactly one word, no spaces, no phrases. The blank must have exactly one word that correctly completes it — avoid blanks where a synonym or alternative word would also work.
+3. Every exercise must use a DIFFERENT example sentence. Never repeat the same sentence or the same example from a previous exercise.
+4. Vary the sentence contexts widely — different subjects, tenses, topics each time.
+5. For mcq: always include exactly 4 options. CRITICAL: exactly ONE option may be correct in context. Before finalising each question, double-check the other three options — if rephrasing the sentence with any of them would also be grammatically valid or natural, replace that option. Wrong options must be unambiguously wrong (wrong gender, wrong tense, wrong conjugation, wrong word order), never just "less common" or "less natural" alternatives.
+6. Do not test stylistic or synonym choices where multiple words would be equally acceptable. Only test points with one objectively correct grammatical answer.
+7. "category" must be exactly one of: ${CANONICAL_CATEGORIES.join(", ")}. Use "other" only if truly none fit — do not invent new category names or wording variants.
+8. Session number is ${sessionCount} — use this to ensure variety across sessions.
+9. No markdown, no asterisks in any text.
+
+Return ONLY this JSON object:
+{
+  "exercises": [
+    {
+      "type": "mcq",
+      "category": "short category name",
+      "question": "full sentence question",
+      "options": ["option A","option B","option C","option D"],
+      "answer": 0,
+      "explanation": "brief explanation of the rule"
+    },
+    {
+      "type": "fill",
+      "category": "short category name",
+      "question": "sentence with ___ where exactly one word is missing",
+      "answerText": "oneword",
+      "explanation": "brief explanation of the rule"
+    }
+  ]
+}`;
+
+  const result = await callClaude(systemP, [{ role:"user", content:userP }]);
+
+  if (result.error) {
+    container.innerHTML = `<div class="banner banner-err">Kon geen oefeningen genereren: ${escHtml(result.error)}</div>`;
+    if (btn) btn.style.display = "block";
+    return;
+  }
+
+  let parsed = null;
+  try {
+    const clean = result.text.replace(/```json\s*/gi,"").replace(/```\s*/g,"").trim();
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
+    if (jsonMatch) parsed = JSON.parse(jsonMatch[0]);
+  } catch(e) {}
+
+  if (!parsed || !parsed.exercises) {
+    container.innerHTML = `<div class="banner banner-err">Kon de oefeningen niet verwerken. Probeer opnieuw.</div>`;
+    if (btn) btn.style.display = "block";
+    return;
+  }
+
+  generatedExercises = parsed.exercises;
+  appState.exercisesDone += parsed.exercises.length;
+  saveState();
+  renderExercises(parsed.exercises);
+  if (btn) btn.style.display = "block";
+}
+
+function renderExercises(exercises) {
+  const container = document.getElementById("exerciseContainer");
+  container.innerHTML = exercises.map((ex, idx) => {
+    const id = "ex_" + idx;
+    const cat = escHtml(ex.category||"");
+    if (ex.type === "mcq") {
+      return `<div class="ex-card" id="${id}">
+        <span class="ex-tag">${cat}</span>
+        <div class="ex-q">${escHtml(ex.question||"")}</div>
+        <div>${(ex.options||[]).map((opt,i) =>
+          `<button class="ex-opt" id="${id}_opt${i}" onclick="checkMCQ('${id}',${i},${ex.answer},'${cat}')">${escHtml(opt)}</button>`
+        ).join("")}</div>
+        <div class="ex-explain" id="${id}_exp">${escHtml(ex.explanation||"")}</div>
+      </div>`;
+    } else {
+      const ans = escHtml(ex.answerText||"");
+      return `<div class="ex-card" id="${id}">
+        <span class="ex-tag">${cat}</span>
+        <div class="ex-q">${escHtml(ex.question||"")}</div>
+        <input class="ex-fill" id="${id}_inp" placeholder="Één woord…"
+          onkeydown="if(event.key==='Enter')checkFill('${id}','${ans}','${cat}')">
+        <button class="btn btn-outline" style="width:100%;margin-bottom:4px" onclick="checkFill('${id}','${ans}','${cat}')">Controleer</button>
+        <div class="ex-explain" id="${id}_exp">${escHtml(ex.explanation||"")}</div>
+      </div>`;
+    }
+  }).join("");
+}
+
+function checkMCQ(id, chosen, correct, category) {
+  for (let i=0; i<4; i++) {
+    const btn = document.getElementById(id+"_opt"+i);
+    if (!btn) continue;
+    btn.onclick = null;
+    if (i===correct) btn.classList.add("correct");
+    else if (i===chosen) btn.classList.add("wrong");
+  }
+  const exp = document.getElementById(id+"_exp");
+  if (exp) exp.classList.add("show");
+  if (chosen === correct && category) trackExerciseCorrect(category);
+  else if (chosen !== correct && category) trackExerciseMistake(category);
+}
+
+function checkFill(id, correct, category) {
+  const inp = document.getElementById(id+"_inp");
+  if (!inp) return;
+  const ok = inp.value.trim().toLowerCase() === correct.toLowerCase();
+  inp.classList.add(ok ? "correct" : "wrong");
+  if (ok) {
+    if (category) trackExerciseCorrect(category);
+  } else {
+    if (category) trackExerciseMistake(category);
+    setTimeout(() => { inp.classList.remove("wrong"); inp.value=""; inp.placeholder="Correct: "+correct; }, 1200);
+  }
+  const exp = document.getElementById(id+"_exp");
+  if (exp) exp.classList.add("show");
+}
+
+function trackExerciseMistake(category) {
+  if (!category) return;
+  const cat = normalizeCategory(category);
+  if (!appState.weaknesses[cat]) appState.weaknesses[cat] = { count:0, correct:0, examples:[] };
+  appState.weaknesses[cat].count++;
+  appState.totalErrors = (appState.totalErrors||0) + 1;
+  saveState();
+}
+
+function trackExerciseCorrect(category) {
+  if (!category) return;
+  const cat = normalizeCategory(category);
+  if (!appState.weaknesses[cat]) appState.weaknesses[cat] = { count:0, correct:0, examples:[] };
+  appState.weaknesses[cat].correct = (appState.weaknesses[cat].correct||0) + 1;
+  saveState();
+}
+
+// ════════════════════════════════════════════
+// PROGRESS
+// ════════════════════════════════════════════
+function renderProgress() {
+  document.getElementById("statSessions").textContent  = appState.sessions||0;
+  document.getElementById("statErrors").textContent    = appState.totalErrors||0;
+  document.getElementById("statFixed").textContent     = appState.exercisesDone||0;
+  document.getElementById("statStreak").textContent    = appState.streak||0;
+
+  const weakEntries = Object.entries(appState.weaknesses||{}).sort((a,b)=>b[1].count-a[1].count);
+  const weakEl = document.getElementById("weakList");
+  if (!weakEntries.length) {
+    weakEl.innerHTML = `<div class="empty-state" style="padding:14px"><p style="font-size:13px">Nog geen data — voltooi een gesprek.</p></div>`;
+  } else {
+    const max = weakEntries[0][1].count;
+    weakEl.innerHTML = weakEntries.map(([cat,d]) => {
+      const pct = Math.round((d.count/max)*100);
+      const color = pct>70?"#c0392b":pct<30?"#27734a":"#d4883a";
+      return `<div class="weak-item">
+        <div>
+          <div style="font-size:14px;font-weight:500">${cat.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())}</div>
+          <div style="font-size:12px;color:#7a7268;margin-top:2px">${d.count}× gedetecteerd</div>
+        </div>
+        <div class="weak-bar-wrap"><div class="weak-bar" style="width:${pct}%;background:${color}"></div></div>
+      </div>`;
+    }).join("");
+  }
+
+  const hist = appState.history||[];
+  const histEl = document.getElementById("historyList");
+  if (!hist.length) {
+    histEl.innerHTML = `<div style="font-size:13px;color:#7a7268">Nog geen gesprekken.</div>`;
+  } else {
+    histEl.innerHTML = hist.slice(0,8).map(h => `
+      <div style="background:white;border-radius:10px;border:1px solid #d0c8b8;padding:11px 13px;margin-bottom:7px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:12px;color:#7a7268">${h.date} · ${LANG_NAMES[h.lang]||h.lang}</span>
+          <span style="font-size:13px;font-weight:600;color:${h.errors===0?"#27734a":h.errors<3?"#d4883a":"#c0392b"}">${h.errors} fout${h.errors!==1?"en":""}</span>
+        </div>
+        ${h.summary?`<div style="font-size:13px;color:#7a7268;line-height:1.4">${escHtml(h.summary)}…</div>`:""}
+      </div>`).join("");
+  }
+}
+
+function resetProgress() {
+  if (!confirm("Alle voortgang verwijderen? Dit kan niet ongedaan worden gemaakt.")) return;
+  appState = defaultState();
+  saveState();
+  renderProgress();
+}
+
+// ════════════════════════════════════════════
+// SPEECH RECOGNITION — tap to start, tap to stop
+// ════════════════════════════════════════════
+let recognition = null;
+let isListening = false;
+let permissionGranted = false;
+
+function setMicState(state) {
+  const btn  = document.getElementById("micBtn");
+  const hint = document.getElementById("micHint");
+  btn.className = "mic-btn " + state;
+  if (hint) {
+    hint.textContent = state === "listening" ? "Tik om te stoppen"
+                     : state === "requesting" ? "Activeren…"
+                     : "Tik om op te nemen";
+  }
+}
+
+async function toggleMic() {
+  // Stop if already listening
+  if (isListening) {
+    if (recognition) { try { recognition.stop(); } catch(_){} recognition = null; }
+    isListening = false;
+    setMicState("idle");
+    return;
+  }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    appendMsg("system", "⚠️ Spraakherkenning niet beschikbaar. Gebruik Chrome op Android of Safari op iOS.");
+    return;
+  }
+
+  setMicState("requesting");
+
+  // Request mic permission once
+  if (!permissionGranted) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(t => t.stop());
+      permissionGranted = true;
+    } catch(e) {
+      setMicState("idle");
+      appendMsg("system", "🎤 Microfoon geweigerd. Tik op het slotje in de adresbalk en sta microfoon toe.");
+      return;
+    }
+  }
+
+  // Fresh instance every time
+  recognition = new SR();
+  recognition.lang = selectedLang;
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  recognition.onstart = () => { isListening = true; setMicState("listening"); };
+
+  recognition.onresult = (e) => {
+    let final = "", interim = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final  += e.results[i][0].transcript;
+      else                       interim += e.results[i][0].transcript;
+    }
+    document.getElementById("textInput").value = (final || interim).trim();
+    autoResize(document.getElementById("textInput"));
+    if (final) { try { recognition.stop(); } catch(_){} }
+  };
+
+  recognition.onerror = (e) => {
+    recognition = null; isListening = false;
+    if (e.error === "aborted") { setMicState("idle"); return; }
+    const msgs = {
+      "not-allowed": "🎤 Microfoon geweigerd. Controleer de browserinstellingen.",
+      "no-speech":   "Geen spraak gedetecteerd — probeer opnieuw.",
+      "network":     "Netwerkfout — spraakherkenning vereist internet.",
+    };
+    setMicState("idle");
+    if (msgs[e.error]) appendMsg("system", msgs[e.error]);
+  };
+
+  recognition.onend = () => {
+    recognition = null; isListening = false;
+    setMicState(document.getElementById("textInput").value.trim() ? "done" : "idle");
+  };
+
+  try { recognition.start(); }
+  catch(e) { recognition = null; isListening = false; setMicState("idle"); }
+}
+
+// ════════════════════════════════════════════
+// CLAUDE API CALL
+// ════════════════════════════════════════════
+async function callClaude(system, messages) {
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type":      "application/json",
+        "x-api-key":         apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({ model:MODEL, max_tokens:1024, system, messages }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      if (res.status === 401) return { error:"Ongeldige API-sleutel. Tik op ⚙ om je sleutel bij te werken." };
+      if (res.status === 429) return { error:"Te veel verzoeken. Wacht even en probeer opnieuw." };
+      return { error: err.error?.message || `API-fout ${res.status}` };
+    }
+
+    const data = await res.json();
+    return { text: data.content?.[0]?.text || "" };
+  } catch(e) {
+    if (e.name === "TypeError" && e.message.includes("fetch")) {
+      return { error:"Kan de API niet bereiken. Controleer je internetverbinding." };
+    }
+    return { error: e.message };
+  }
+}
+
+// ════════════════════════════════════════════
+// CHAT UI HELPERS
+// ════════════════════════════════════════════
+let typingEl = null;
+
+function appendMsg(role, text) {
+  const scroll = document.getElementById("chatScroll");
+  const div = document.createElement("div");
+  div.className = "msg msg-" + role + " fade-in";
+  div.textContent = text;
+  scroll.appendChild(div);
+  scrollChat();
+}
+
+function showTyping() {
+  const scroll = document.getElementById("chatScroll");
+  typingEl = document.createElement("div");
+  typingEl.className = "msg-typing";
+  typingEl.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  scroll.appendChild(typingEl);
+  scrollChat();
+}
+
+function hideTyping() {
+  if (typingEl) { typingEl.remove(); typingEl = null; }
+}
+
+function scrollChat() {
+  const s = document.getElementById("chatScroll");
+  if (s) setTimeout(() => s.scrollTop = s.scrollHeight, 50);
+}
+
+function disableInput(yes) {
+  const bar = document.getElementById("inputBar");
+  if (yes) bar.classList.add("disabled");
+  else     bar.classList.remove("disabled");
+}
+
+function autoResize(el) {
+  el.style.height = "44px";
+  el.style.height = Math.min(el.scrollHeight, 100) + "px";
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+</script>
+</body>
+</html>
